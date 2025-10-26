@@ -29,3 +29,33 @@ Solution 2
 1. Read in FASTA data, creates an `RDD[String]` instance with each element being a FASTA record.
 2. For every record, create a HashMap[dna_letter,frequency], then flatten the hash map with flatMap() into a list of key, value pairs.
 3. For each DNA letter, aggregate and sum all the frequencies.
+
+Positives with solution 2
+- Reduces the number of pairs for each DNA sequence
+- The reduction of pairs emitted reduces the strain on the network.
+- No scalability since solution uses a `reduceByKey()` transformation
+
+Concerns with solution 2
+- solution still emits up to 6 keys pairs per DNA string
+- For larger datasets or limited resources, solution would use too much memory. Why? This is because of the creation of a dictionary per DNA sequence
+
+## DNA Base Count Solution 3
+This solution makes use of the `mapPartitions()` transformation.
+
+How does the `mapPartitions()` transformation work?
+
+For a source RDD[T] and target RDD[U], mapPartitions transformation returns target RDD[U] by applying function f() to each partition of the source RDD[T]. function f(), takes in an iterator of type T and then returns type U.
+
+This solution works with `partitions` - when data is represented in the RDD format, Spark automatically partitions RDDs and distributes these partitions across the available nodes. So rather than creating a dictionary for each dna record, solution 2, a dictionary is created per partition. Spark splits input data into partitions, and then executes computations on each partition independently and in parallel. With `mapPartitions()` transformation, source RDD is partitioned into *N* partitions (determined by available resources to the spark cluster) then each partition is passed into a function.
+
+<img src="pictures/dna_base_count_sol_3.PNG" alt="DNA base count solution 3" width="300">
+
+**Summarization Design Pattern**
+
+The `mapPartitions()` transformation is useful if you want to implement the summarization design pattern - get summary view of the data working with in order to to get insights not available by looking at localized records only. 
+This pattern will involve grouping similar data together and performing an operation such as calculating a statistic, building an index, or simply counting. 
+
+
+Positive of Solution 3
+- emits a smaller number of key pairs than solution 1 and 2 - a dictionary is created per partition(rather than per fasta record) and then flattened into a list of key, value pairs.
+- scalable since we use `mapPartitions()` 
