@@ -50,12 +50,23 @@ This solution works with `partitions` - when data is represented in the RDD form
 
 <img src="pictures/dna_base_count_sol_3.PNG" alt="DNA base count solution 3" width="300">
 
+Positive of Solution 3
+- emits a smaller number of key pairs than solution 1 and 2 - a dictionary is created per partition(rather than per fasta record) and then flattened into a list of key, value pairs.
+- scalable since we use `mapPartitions()` to handle each partition and `reduceByKey()` to reduce all pairs emitted by each partition.
+
+Concerns for solution 3
+- use of custom code -but we will deal.
+
+Things Learnt
+
 **Summarization Design Pattern**
 
 The `mapPartitions()` transformation is useful if you want to implement the summarization design pattern - get summary view of the data working with in order to to get insights not available by looking at localized records only. 
 This pattern will involve grouping similar data together and performing an operation such as calculating a statistic, building an index, or simply counting. 
 
 
-Positive of Solution 3
-- emits a smaller number of key pairs than solution 1 and 2 - a dictionary is created per partition(rather than per fasta record) and then flattened into a list of key, value pairs.
-- scalable since we use `mapPartitions()` 
+- when dealing with situations with large volumes of pairs,  `reduceByKey()` is more efficient than the `groupByKey()` transformation because of different shuffling algorithms (hmmm).
+
+- Use the `mapPartitions()` transformation in situations where we want to extract and aggregate or derive a small amount of information - *summarization*
+
+- aim for solutions that emit the lowest number of pairs as this improves performance of data solutions. By doing this you reduce the effort required for the **sort and shuffle phase** of spark application.
